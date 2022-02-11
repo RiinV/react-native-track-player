@@ -56,3 +56,5 @@ example/ios/Pods
 ios/Pods
 ios/RNTrackPlayer.xcworkspace
 Podfile.lock
+
+.vscode/*

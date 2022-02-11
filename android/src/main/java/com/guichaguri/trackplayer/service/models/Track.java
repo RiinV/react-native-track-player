@@ -8,6 +8,8 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.RatingCompat;
 import android.support.v4.media.session.MediaSessionCompat.QueueItem;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.offline.DownloadHelper;
+import com.google.android.exoplayer2.offline.DownloadRequest;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
@@ -16,7 +18,9 @@ import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.source.smoothstreaming.DefaultSsChunkSource;
 import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
 import com.google.android.exoplayer2.upstream.*;
+import com.google.android.exoplayer2.util.Log;
 import com.google.android.exoplayer2.util.Util;
+import com.guichaguri.trackplayer.offline.DownloadUtil;
 import com.guichaguri.trackplayer.service.Utils;
 import com.guichaguri.trackplayer.service.player.LocalPlayback;
 
@@ -125,9 +129,18 @@ public class Track extends TrackMetadata {
     }
 
     public MediaSource toMediaSource(Context ctx, LocalPlayback playback) {
+        final String trackId = (String) originalItem.get("id");
+        DownloadRequest downloadRequest = DownloadUtil.getDownloadTracker(ctx).getDownloadRequest(trackId);
+
+        if (downloadRequest != null) {
+            Log.d("Offline", "found download");
+            DataSource.Factory dataSourceFactory = DownloadUtil.buildDataSourceFactory(ctx);
+            return DownloadHelper.createMediaSource(downloadRequest, dataSourceFactory);
+        }
+
         // Updates the user agent if not set
         if(userAgent == null || userAgent.isEmpty())
-            userAgent = Util.getUserAgent(ctx, "react-native-track-player");
+            userAgent = Util.getUserAgent(ctx, "rahvaraamat");
 
         DataSource.Factory ds;
 

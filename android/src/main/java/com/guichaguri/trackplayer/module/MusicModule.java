@@ -4,15 +4,21 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.media.RatingCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.facebook.react.bridge.*;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.RenderersFactory;
+import com.google.android.exoplayer2.offline.DownloadService;
+import com.guichaguri.trackplayer.offline.DownloadTracker;
+import com.guichaguri.trackplayer.offline.DownloadUtil;
 import com.guichaguri.trackplayer.service.MusicBinder;
 import com.guichaguri.trackplayer.service.MusicService;
 import com.guichaguri.trackplayer.service.Utils;
@@ -22,6 +28,7 @@ import com.guichaguri.trackplayer.service.player.ExoPlayback;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
 import java.util.*;
 
 /**
@@ -38,6 +45,7 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
     public MusicModule(ReactApplicationContext reactContext) {
         super(reactContext);
     }
+    private DownloadTracker downloadTracker;
 
     @Override
     @Nonnull
@@ -49,16 +57,23 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
     public void initialize() {
         ReactContext context = getReactApplicationContext();
         LocalBroadcastManager manager = LocalBroadcastManager.getInstance(context);
-
         eventHandler = new MusicEvents(context);
         manager.registerReceiver(eventHandler, new IntentFilter(Utils.EVENT_INTENT));
+        downloadTracker = DownloadUtil.getDownloadTracker(context);
+
+        try {
+            DownloadService.start(context, DownloadService.class);
+        } catch (IllegalStateException e) {
+            DownloadService.startForeground(context, DownloadService.class);
+        }
+
     }
 
     @Override
     public void onCatalystInstanceDestroy() {
         ReactContext context = getReactApplicationContext();
 
-        if(eventHandler != null) {
+        if (eventHandler != null) {
             LocalBroadcastManager manager = LocalBroadcastManager.getInstance(context);
 
             manager.unregisterReceiver(eventHandler);
@@ -68,7 +83,7 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        binder = (MusicBinder)service;
+        binder = (MusicBinder) service;
         connecting = false;
 
         // Reapply options that user set before with updateOptions
@@ -77,7 +92,7 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         }
 
         // Triggers all callbacks
-        while(!initCallbacks.isEmpty()) {
+        while (!initCallbacks.isEmpty()) {
             binder.post(initCallbacks.remove());
         }
     }
@@ -89,17 +104,19 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
     }
 
     /**
-     * Waits for a connection to the service and/or runs the {@link Runnable} in the player thread
+     * Waits for a connection to the service and/or runs the {@link Runnable} in the
+     * player thread
      */
     private void waitForConnection(Runnable r) {
-        if(binder != null) {
+        if (binder != null) {
             binder.post(r);
             return;
         } else {
             initCallbacks.add(r);
         }
 
-        if(connecting) return;
+        if (connecting)
+            return;
 
         ReactApplicationContext context = getReactApplicationContext();
 
@@ -168,25 +185,29 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
     @ReactMethod
     public void destroy() {
         // Ignore if it was already destroyed
-        if (binder == null && !connecting) return;
+        if (binder == null && !connecting)
+            return;
 
         try {
-            if(binder != null) {
+            if (binder != null) {
                 binder.destroy();
                 binder = null;
             }
 
             ReactContext context = getReactApplicationContext();
-            if(context != null) context.unbindService(this);
-        } catch(Exception ex) {
-            // This method shouldn't be throwing unhandled errors even if something goes wrong.
+            if (context != null)
+                context.unbindService(this);
+        } catch (Exception ex) {
+            // This method shouldn't be throwing unhandled errors even if something goes
+            // wrong.
             Log.e(Utils.LOG, "An error occurred while destroying the service", ex);
         }
     }
 
     @ReactMethod
     public void updateOptions(ReadableMap data, final Promise callback) {
-        // keep options as we may need them for correct MetadataManager reinitialization later
+        // keep options as we may need them for correct MetadataManager reinitialization
+        // later
         options = Arguments.toBundle(data);
 
         waitForConnection(() -> {
@@ -204,7 +225,7 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
 
             try {
                 trackList = Track.createTracks(getReactApplicationContext(), bundleList, binder.getRatingType());
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 callback.reject("invalid_track_object", ex);
                 return;
             }
@@ -213,11 +234,11 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
             // -1 means no index was passed and therefore should be inserted at the end.
             int index = insertBeforeIndex != -1 ? insertBeforeIndex : queue.size();
 
-            if(index < 0 || index > queue.size()) {
+            if (index < 0 || index > queue.size()) {
                 callback.reject("index_out_of_bounds", "The track index is out of bounds");
-            } else if(trackList == null || trackList.isEmpty()) {
+            } else if (trackList == null || trackList.isEmpty()) {
                 callback.reject("invalid_track_object", "Track is missing a required key");
-            } else if(trackList.size() == 1) {
+            } else if (trackList.size() == 1) {
                 binder.getPlayback().add(trackList.get(0), index, callback);
             } else {
                 binder.getPlayback().add(trackList, index, callback);
@@ -233,12 +254,13 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
             List<Track> queue = binder.getPlayback().getQueue();
             List<Integer> indexes = new ArrayList<>();
 
-            for(Object o : trackList) {
-                int index = o instanceof Integer ? (int)o : Integer.parseInt(o.toString());
+            for (Object o : trackList) {
+                int index = o instanceof Integer ? (int) o : Integer.parseInt(o.toString());
 
                 // we do not allow removal of the current item
                 int currentIndex = binder.getPlayback().getCurrentTrackIndex();
-                if (index == currentIndex) continue;
+                if (index == currentIndex)
+                    continue;
 
                 if (index >= 0 && index < queue.size()) {
                     indexes.add(index);
@@ -259,7 +281,7 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
             ExoPlayback playback = binder.getPlayback();
             List<Track> queue = playback.getQueue();
 
-            if(index < 0 || index >= queue.size()) {
+            if (index < 0 || index >= queue.size()) {
                 callback.reject("index_out_of_bounds", "The index is out of bounds");
             } else {
                 Track track = queue.get(index);
@@ -275,7 +297,8 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         final Bundle data = Arguments.toBundle(map);
 
         waitForConnection(() -> {
-            NowPlayingMetadata metadata = new NowPlayingMetadata(getReactApplicationContext(), data, binder.getRatingType());
+            NowPlayingMetadata metadata = new NowPlayingMetadata(getReactApplicationContext(), data,
+                    binder.getRatingType());
             binder.updateNowPlayingMetadata(metadata);
             callback.resolve(null);
         });
@@ -411,7 +434,7 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
             List queue = new ArrayList();
             List<Track> tracks = binder.getPlayback().getQueue();
 
-            for(Track track : tracks) {
+            for (Track track : tracks) {
                 queue.add(track.originalItem);
             }
 
@@ -429,7 +452,7 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         waitForConnection(() -> {
             long duration = binder.getPlayback().getDuration();
 
-            if(duration == C.TIME_UNSET) {
+            if (duration == C.TIME_UNSET) {
                 callback.resolve(Utils.toSeconds(0));
             } else {
                 callback.resolve(Utils.toSeconds(duration));
@@ -442,7 +465,7 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         waitForConnection(() -> {
             long position = binder.getPlayback().getBufferedPosition();
 
-            if(position == C.POSITION_UNSET) {
+            if (position == C.POSITION_UNSET) {
                 callback.resolve(Utils.toSeconds(0));
             } else {
                 callback.resolve(Utils.toSeconds(position));
@@ -455,7 +478,7 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         waitForConnection(() -> {
             long position = binder.getPlayback().getPosition();
 
-            if(position == C.POSITION_UNSET) {
+            if (position == C.POSITION_UNSET) {
                 callback.reject("unknown", "Unknown position");
             } else {
                 callback.resolve(Utils.toSeconds(position));
@@ -470,5 +493,33 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         } else {
             waitForConnection(() -> callback.resolve(binder.getPlayback().getState()));
         }
+    }
+
+
+    @ReactMethod
+    public void download(ReadableArray tracks) {
+        Log.d("Offline", "download method");
+
+        final ArrayList bundleList = Arguments.toList(tracks);
+        final Bundle bundleTrack = (Bundle) bundleList.get(0);
+        final Uri downloadUri = Uri.parse((String) bundleTrack.get("url"));
+        final String id = (String) bundleTrack.get("id");
+
+        Log.d("Offline", String.valueOf(downloadUri));
+        ReactContext context = getReactApplicationContext();
+        RenderersFactory renderersFactory = DownloadUtil.buildRenderersFactory(context);
+        downloadTracker.startDownload("hello download", downloadUri, id, renderersFactory);
+    }
+
+    @ReactMethod
+    public void removeDownload(String trackId) {
+        Log.d("Offline", "remove download method");
+        downloadTracker.removeDownload(trackId);
+    }
+
+    @ReactMethod
+    public void getCompletedDownloads(final Promise callback) {
+        Log.d("Offline", "get downloads method");
+        callback.resolve(Arguments.fromList(downloadTracker.getDownloads()));
     }
 }

@@ -215,6 +215,34 @@ async function getRepeatMode(): Promise<RepeatMode> {
   return TrackPlayer.getRepeatMode()
 }
 
+function download(tracks: Track | Track[]) {
+  if (Array.isArray(tracks)) {
+    tracks = [...tracks]
+  } else {
+    tracks = [tracks]
+  }
+
+  if (tracks.length < 1) return
+
+  for (let i = 0; i < tracks.length; i++) {
+    // Clone the object before modifying it
+    tracks[i] = { ...tracks[i] }
+
+    // Resolve the URLs
+    tracks[i].url = resolveImportedPath(tracks[i].url)
+    tracks[i].artwork = resolveImportedPath(tracks[i].artwork)
+  }
+  return TrackPlayer.download(tracks)
+}
+
+function removeDownload(trackId: string) {
+  return TrackPlayer.removeDownload(trackId)
+}
+
+async function getCompletedDownloads(): Promise<string[]> {
+  return TrackPlayer.getCompletedDownloads()
+}
+
 export default {
   // MARK: - General API
   setupPlayer,
@@ -257,4 +285,8 @@ export default {
   getPosition,
   getState,
   getRepeatMode,
+
+  download,
+  removeDownload,
+  getCompletedDownloads,
 }
