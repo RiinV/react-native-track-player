@@ -9,9 +9,10 @@
 import Foundation
 import MediaPlayer
 import SwiftAudioEx
+import AVFoundation
 
 @objc(RNTrackPlayer)
-public class RNTrackPlayer: RCTEventEmitter {
+public class RNTrackPlayer: RCTEventEmitter  {
 
     // MARK: - Attributes
 
@@ -321,14 +322,20 @@ public class RNTrackPlayer: RCTEventEmitter {
             UIApplication.shared.beginReceivingRemoteControlEvents();
         }
 
-        var tracks = [Track]()
+        var tracks = [AudioItem]()
         for trackDict in trackDicts {
             guard let track = Track(dictionary: trackDict) else {
                 reject("invalid_track_object", "Track is missing a required key", nil)
                 return
             }
-
-            tracks.append(track)
+            
+            let asset = AssetPersistenceManager.sharedManager.localAssetForStream(withName: track.id)
+            if asset != nil {
+                let item = DefaultAudioItem(audioUrl: "", sourceType: .file, urlAsset: asset)
+                tracks.append(item)
+            } else {
+                tracks.append(track)
+            }
         }
 
         var index: Int = 0
@@ -660,5 +667,41 @@ public class RNTrackPlayer: RCTEventEmitter {
         }
 
         sendEvent(withName: "playback-track-changed", body: dictionary)
+    }
+
+
+    @objc(download:)
+    public func download(trackDicts: [[String: Any]]) {
+        print("hi !!!!")
+        var tracks = [Track]()
+        for trackDict in trackDicts {
+            guard let track = Track(dictionary: trackDict) else {
+                print("return")
+//                reject("invalid_track_object", "Track is missing a required key", nil)
+                return
+            }
+            print(track)
+            tracks.append(track)
+            
+            let urlAsset = AVURLAsset(url: URL(string: track.getSourceUrl())!)
+            let asset = Asset(name: track.id, urlAsset: urlAsset)
+            AssetPersistenceManager.sharedManager.downloadStream(for: asset)
+        }
+
+    
+        print("done")
+   
+    }
+
+
+    @objc(removeDownload:resolver:rejecter:)
+    public func removeDownload(trackId: NSString, resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
+
+    }
+
+    @objc(getCompletedDownloads:rejecter:)
+    public func getCompletedDownloads(resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
+
+
     }
 }

@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		46C6FA1727EE24C3002A1A26 /* Stream.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C6FA1427EE24C3002A1A26 /* Stream.swift */; };
+		46C6FA1827EE24C3002A1A26 /* AssetPersistenceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C6FA1527EE24C3002A1A26 /* AssetPersistenceManager.swift */; };
+		46C6FA1927EE24C3002A1A26 /* Asset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C6FA1627EE24C3002A1A26 /* Asset.swift */; };
 		9A0CF10E2046E5AC0093A5DF /* PitchAlgorithms.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A0CF10D2046E5AC0093A5DF /* PitchAlgorithms.swift */; };
 		9B0E282E1F07D76F00B71D2A /* RNTrackPlayerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B0E282D1F07D76F00B71D2A /* RNTrackPlayerBridge.m */; };
 		9B0E282F1F07D76F00B71D2A /* RNTrackPlayerBridge.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 9B0E282C1F07D76F00B71D2A /* RNTrackPlayerBridge.h */; };
@@ -32,6 +35,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		46C6FA1427EE24C3002A1A26 /* Stream.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Stream.swift; sourceTree = "<group>"; };
+		46C6FA1527EE24C3002A1A26 /* AssetPersistenceManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AssetPersistenceManager.swift; sourceTree = "<group>"; };
+		46C6FA1627EE24C3002A1A26 /* Asset.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Asset.swift; sourceTree = "<group>"; };
 		9A0CF10D2046E5AC0093A5DF /* PitchAlgorithms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchAlgorithms.swift; sourceTree = "<group>"; };
 		9B0E28291F07D76F00B71D2A /* libRNTrackPlayer.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNTrackPlayer.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		9B0E282C1F07D76F00B71D2A /* RNTrackPlayerBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNTrackPlayerBridge.h; sourceTree = "<group>"; };
@@ -88,6 +94,9 @@
 		9B0E287A1F0831A400B71D2A /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				46C6FA1627EE24C3002A1A26 /* Asset.swift */,
+				46C6FA1527EE24C3002A1A26 /* AssetPersistenceManager.swift */,
+				46C6FA1427EE24C3002A1A26 /* Stream.swift */,
 				9B78A2451F3F12BC002B5E3C /* Track.swift */,
 				9B78A2471F3F12C9002B5E3C /* MediaURL.swift */,
 				9BFC1FDC1F61A8E8008795BF /* Capabilities.swift */,
@@ -173,10 +182,13 @@
 				9B0E282E1F07D76F00B71D2A /* RNTrackPlayerBridge.m in Sources */,
 				9B18C2FA226356560019375A /* SessionCategories.swift in Sources */,
 				BF227390244F344D00A9893D /* Metadata.swift in Sources */,
+				46C6FA1927EE24C3002A1A26 /* Asset.swift in Sources */,
 				9B78A2481F3F12C9002B5E3C /* MediaURL.swift in Sources */,
 				9BFC1FDD1F61A8E8008795BF /* Capabilities.swift in Sources */,
 				9B78A2461F3F12BC002B5E3C /* Track.swift in Sources */,
 				9A0CF10E2046E5AC0093A5DF /* PitchAlgorithms.swift in Sources */,
+				46C6FA1727EE24C3002A1A26 /* Stream.swift in Sources */,
+				46C6FA1827EE24C3002A1A26 /* AssetPersistenceManager.swift in Sources */,
 				9B58DF3B1F40C0F000C2105E /* RNTrackPlayer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

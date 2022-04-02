@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "SwiftAudioEx",
+        "repositoryURL": "https://github.com/katerynapeikova/SwiftAudioEx",
+        "state": {
+          "branch": "offline",
+          "revision": "7fd488f8adae2976e7336d0622ede05fe85a2747",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}

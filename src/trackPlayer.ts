@@ -235,7 +235,7 @@ function download(tracks: Track | Track[]) {
   return TrackPlayer.download(tracks)
 }
 
-function removeDownload(trackId: string) {
+async function removeDownload(trackId: string): Promise<void> {
   return TrackPlayer.removeDownload(trackId)
 }
 

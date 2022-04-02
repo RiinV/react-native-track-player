@@ -12,10 +12,19 @@ import AVFoundation
 import SwiftAudioEx
 
 class Track: NSObject, AudioItem, TimePitching, AssetOptionsProviding {
+    func getURLAsset() -> AVURLAsset? {
+        return asset;
+    }
+    
+    func getUrl() -> URL? {
+        return URL(string: url.isLocal ? url.value.path : url.value.absoluteString);
+    }
+    
     let url: MediaURL
     
     @objc var title: String
     @objc var artist: String
+    let id: String
     
     var date: String?
     var desc: String?
@@ -26,6 +35,8 @@ class Track: NSObject, AudioItem, TimePitching, AssetOptionsProviding {
     let headers: [String: Any]?
     let pitchAlgorithm: String?
     var isLiveStream: Bool?
+    var asset: AVURLAsset?
+    
     
     @objc var album: String?
     @objc var artwork: MPMediaItemArtwork?
@@ -41,6 +52,7 @@ class Track: NSObject, AudioItem, TimePitching, AssetOptionsProviding {
         self.url = url
         self.title = title
         self.artist = artist
+        self.id = dictionary["id"] as? String ?? ""
         
         self.date = dictionary["date"] as? String
         self.album = dictionary["album"] as? String
@@ -117,6 +129,14 @@ class Track: NSObject, AudioItem, TimePitching, AssetOptionsProviding {
         
         handler(nil)
     }
+    
+//    func getUrl() -> String? {
+//        return title
+//    }
+//
+//    func getURLAsset() -> String? {
+//        return asset
+//    }
     
     // MARK: - TimePitching Protocol
     

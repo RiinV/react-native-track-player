@@ -56,15 +56,15 @@ const togglePlayback = async (playbackState: State) => {
 };
 
 // 'https://playertest.longtailvideo.com/adaptive/alt-audio-no-video/sintel/playlist.m3u8'
-const url =
-  'http://ec2-13-53-83-250.eu-north-1.compute.amazonaws.com/vods3/_definst_/mp3:amazons3/audio-books-staging-private/76/8d/768d79dcea8ae1e9fa0fa1e7e9b48df7_1.mp3/playlist.m3u8?wowzatokenendtime=1644512013&wowzatokenstarttime=1644508413&wowzatokenhash=yD1DokrFnYgu5lrzsYS_nD8pRr2do26fnpWcsP2KR_PgknLWWMbVnecfp5ty5eCv';
 
 const App = () => {
   useEffect(() => {
     setupIfNecessary();
   }, []);
+
   useEffect(() => {
     async function func() {
+      console.log('hi downloads');
       const downloads = await TrackPlayer.getCompletedDownloads();
       console.log('downloads', downloads);
     }
@@ -72,12 +72,35 @@ const App = () => {
     func();
   }, []);
 
+  const [url, setUrl] = useState('');
+
+  useEffect(() => {
+    fetch(
+      'https://audio.dev.rahvaraamat.ee/audio/product-chapter/view?id=342',
+      {
+        headers: {
+          store: 'WEB3',
+        },
+      },
+    )
+      .then(response => {
+        return response.json();
+      })
+      .then(data => {
+        setUrl(data.stream_url);
+      });
+  }, []);
+
   const onDownload = () => {
+    console.log('react download');
     TrackPlayer.download({
       url,
       id: 'xxx',
+      title: 'my title',
+      artist: 'my artist',
     });
   };
+
   const state = usePlaybackState();
 
   const onPlayPress = async () => {
@@ -85,10 +108,12 @@ const App = () => {
   };
 
   const add = async () => {
+    console.log('add track');
     TrackPlayer.add({
       url,
       id: 'xxx',
       title: 'downloaded',
+      artist: 'my artist',
       type: TrackType.HLS,
     });
   };
@@ -97,7 +122,7 @@ const App = () => {
     <SafeAreaView style={styles.screenContainer}>
       <StatusBar barStyle={'light-content'} />
       <Pressable onPress={onDownload}>
-        <Text style={styles.secondaryActionButton}>Next</Text>
+        <Text style={styles.secondaryActionButton}>Download</Text>
       </Pressable>
       <Pressable onPress={add}>
         <Text style={styles.secondaryActionButton}>Add</Text>
