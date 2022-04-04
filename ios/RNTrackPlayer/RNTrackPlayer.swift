@@ -10,6 +10,29 @@ import Foundation
 import MediaPlayer
 import SwiftAudioEx
 import AVFoundation
+import VidLoader
+//import VidLoader
+
+
+struct VideoData: Codable {
+    let identifier: String
+    let title: String
+    let imageName: String
+    let state: DownloadState
+    let stringURL: String
+    let location: URL?
+
+    init(identifier: String, title: String, imageName: String = "default_thumbnail",
+         state: DownloadState = .unknown, stringURL: String, location: URL? = nil) {
+        self.identifier = identifier
+        self.title = title
+        self.imageName = imageName
+        self.state = state
+        self.stringURL = stringURL
+        self.location = location
+    }
+}
+
 
 @objc(RNTrackPlayer)
 public class RNTrackPlayer: RCTEventEmitter  {
@@ -18,11 +41,33 @@ public class RNTrackPlayer: RCTEventEmitter  {
 
     private var hasInitialized = false
     private let player = QueuedAudioPlayer()
+    
+    
+    // MARK: - offline
 
+    private var vidLoader = VidLoader()
+    private var userDefaults: UserDefaults
+    private var itemsKey: String
+    private var fileManager: FileManager
+    private var items: [String:VideoData] = [:]
+    private var observer: VidObserver?
+    
+    
     // MARK: - Lifecycle Methods
-
+    
     public override init() {
+        self.userDefaults = UserDefaults.standard
+        self.itemsKey = "vid_loader_items"
+        self.fileManager = FileManager.default
+
+        
         super.init()
+    
+        self.items = extractItems(itemsKey: itemsKey)
+        self.observer = VidObserver(type: .all, stateChanged: { [weak self] item in
+            self?.update(item: item)
+        })
+        setupObservers()
 
         player.event.playbackEnd.addListener(self, handleAudioPlayerPlaybackEnded)
         player.event.receiveMetadata.addListener(self, handleAudioPlayerMetadataReceived)
@@ -104,6 +149,8 @@ public class RNTrackPlayer: RCTEventEmitter  {
             "remote-like",
             "remote-dislike",
             "remote-bookmark",
+            
+            "download-completed"
         ]
     }
 
@@ -329,8 +376,9 @@ public class RNTrackPlayer: RCTEventEmitter  {
                 return
             }
             
-            let asset = AssetPersistenceManager.sharedManager.localAssetForStream(withName: track.id)
-            if asset != nil {
+            let location = items[track.id]?.location
+            if location != nil {
+                let asset = vidLoader.asset(location: location!)
                 let item = DefaultAudioItem(audioUrl: "", sourceType: .file, urlAsset: asset)
                 tracks.append(item)
             } else {
@@ -672,7 +720,6 @@ public class RNTrackPlayer: RCTEventEmitter  {
 
     @objc(download:)
     public func download(trackDicts: [[String: Any]]) {
-        print("hi !!!!")
         var tracks = [Track]()
         for trackDict in trackDicts {
             guard let track = Track(dictionary: trackDict) else {
@@ -680,15 +727,16 @@ public class RNTrackPlayer: RCTEventEmitter  {
 //                reject("invalid_track_object", "Track is missing a required key", nil)
                 return
             }
-            print(track)
             tracks.append(track)
             
-            let urlAsset = AVURLAsset(url: URL(string: track.getSourceUrl())!)
-            let asset = Asset(name: track.id, urlAsset: urlAsset)
-            AssetPersistenceManager.sharedManager.downloadStream(for: asset)
+            guard let url = track.getUrl() else { return }
+            let headers = track.headers?.mapValues({$0 as! String})
+            let downloadValues = DownloadValues(identifier: track.id,
+                                                url: url,
+                                                title: track.title,
+                                                headers: headers)
+            vidLoader.download(downloadValues)
         }
-
-    
         print("done")
    
     }
@@ -696,12 +744,79 @@ public class RNTrackPlayer: RCTEventEmitter  {
 
     @objc(removeDownload:resolver:rejecter:)
     public func removeDownload(trackId: NSString, resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
-
+//        AssetPersistenceManager.sharedManager.deleteAsset(trackId as String, reject: reject)
+        resolve(NSNull())
     }
 
     @objc(getCompletedDownloads:rejecter:)
     public func getCompletedDownloads(resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
+        let filtered = items.filter({ $1.state == DownloadState.completed })
+        let keys = NSArray(array: Array(filtered.keys))
+        resolve(keys)
+    }
+    
+    @objc(getCompletedDownloads:rejecter:)
+    public func getCompletedDownloads(resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
+        let filtered = items.filter({ $1.state == DownloadState.completed })
+        let keys = NSArray(array: Array(filtered.keys))
+        resolve(keys)
+    }
+    
+    @objc(getActiveDownloads:rejecter:)
+    public func getActiveDownloads(resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
+        //        TODO: add proper filtering for active downloads
+        let filtered = items.filter({ $1.state != DownloadState.completed })
+        let keys = NSArray(array: Array(filtered.keys))
+        resolve(keys)
+    }
+    
+    
+    private func update(item: ItemInformation) {
+        items[item.identifier] = VideoData(identifier: item.identifier,
+                                           title: item.title ?? "default title", state: item.state,
+                                           stringURL:  item.mediaLink, location: item.location)
+        print(item.state)
+        
+        let filteredDownloaded = items.filter({ $1.state == DownloadState.completed })
+        let downloaded = NSArray(array: Array(filteredDownloaded.keys))
+        
+//        TODO: add proper filtering for active downloads
+        let filteredInProgress = items.filter({ $1.state != DownloadState.completed })
+        let inProgress = NSArray(array: Array(filteredInProgress.keys))
+        
 
+        sendEvent(withName: "download-completed", body: ["trackId": item.identifier, "completedDownloads": downloaded, "activeDownloads": inProgress])
 
+        save(items: items)
+    }
+
+    private func removeVideo(identifier: String, location: URL?, state: DownloadState) {
+        guard let data = items[identifier] else { return }
+        if let location = location ?? data.location { try? fileManager.removeItem(at: location) }
+        let videoData = VideoData(identifier: data.identifier, title: data.title,
+                                  imageName: data.imageName, state: state,
+                                  stringURL: data.stringURL)
+        items[identifier] = videoData
+        save(items: items)
+    }
+
+    private func setupObservers() {
+        observer = VidObserver(type: .all, stateChanged: { [weak self] item in
+            self?.update(item: item)
+        })
+        vidLoader.observe(with: observer)
+    }
+    
+    private func save(items: [String: VideoData]) {
+        guard let data = try? JSONEncoder().encode(items) else { return }
+        userDefaults.set(data, forKey: itemsKey)
+    }
+    
+    private func extractItems(itemsKey: String) -> [String : VideoData] {
+        guard let data = userDefaults.value(forKey: itemsKey) as? Data,
+              let items = try? JSONDecoder().decode([String: VideoData].self, from: data) else {
+                return [:]
+        }
+        return items
     }
 }

@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
 
   s.author = "David Chavez"
   s.homepage = package["repository"]["url"]
-  s.platform = :ios, "11.0"
+  s.platform = :ios, "12.0"
 
   s.source = { :git => package["repository"]["url"], :tag => "v#{s.version}" }
   s.source_files = "ios/**/*.{h,m,swift}"
@@ -19,6 +19,7 @@ Pod::Spec.new do |s|
 
   s.dependency "React-Core"
   s.dependency "SwiftAudioEx"
+  s.dependency "VidLoader"
   # s.dependency "SwiftAudioEx", "0.14.7"
   # should specify my SwiftAudioEx ?
 end

@@ -74,6 +74,10 @@ const App = () => {
 
   const [url, setUrl] = useState('');
 
+  useTrackPlayerEvents([Event.DownloadCompleted], event => {
+    console.log('event', event);
+  });
+
   useEffect(() => {
     fetch(
       'https://audio.dev.rahvaraamat.ee/audio/product-chapter/view?id=342',
@@ -95,9 +99,9 @@ const App = () => {
     console.log('react download');
     TrackPlayer.download({
       url,
-      id: 'xxx',
-      title: 'my title',
-      artist: 'my artist',
+      id: 'f',
+      title: 'my title 2',
+      artist: 'my artist 2',
     });
   };
 
@@ -110,12 +114,21 @@ const App = () => {
   const add = async () => {
     console.log('add track');
     TrackPlayer.add({
-      url,
+      url: '',
       id: 'xxx',
       title: 'downloaded',
       artist: 'my artist',
       type: TrackType.HLS,
     });
+  };
+
+  const onDelete = async () => {
+    console.log('delete track');
+    TrackPlayer.removeDownload('xxx');
+  };
+
+  const onReset = async () => {
+    TrackPlayer.reset();
   };
 
   return (
@@ -129,6 +142,12 @@ const App = () => {
       </Pressable>
       <Pressable onPress={onPlayPress}>
         <Text style={styles.secondaryActionButton}>Play</Text>
+      </Pressable>
+      <Pressable onPress={onDelete}>
+        <Text style={styles.secondaryActionButton}>delete</Text>
+      </Pressable>
+      <Pressable onPress={onReset}>
+        <Text style={styles.secondaryActionButton}>reset</Text>
       </Pressable>
     </SafeAreaView>
   );
