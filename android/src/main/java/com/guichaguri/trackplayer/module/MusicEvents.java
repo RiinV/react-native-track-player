@@ -37,7 +37,7 @@ public class MusicEvents extends BroadcastReceiver {
     public static final String PLAYBACK_ERROR = "playback-error";
 
     // Download Events
-    public static final String DOWNLOAD_COMPLETED = "download-completed";
+    public static final String DOWNLOAD_CHANGED = "download-changed";
 
 
     private final ReactContext reactContext;

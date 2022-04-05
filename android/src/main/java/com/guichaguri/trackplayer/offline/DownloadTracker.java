@@ -42,9 +42,11 @@ import com.guichaguri.trackplayer.R;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -74,8 +76,6 @@ public class DownloadTracker {
     private final DownloadIndex downloadIndex;
     private final DefaultTrackSelector.Parameters trackSelectorParameters;
 
-    @Nullable
-    private StartDownloadDialogHelper startDownloadDialogHelper;
 
     public DownloadTracker(
             Context context, DataSource.Factory dataSourceFactory, DownloadManager downloadManager) {
@@ -114,23 +114,33 @@ public class DownloadTracker {
             RenderersFactory renderersFactory) {
 
         Download download = downloads.get(id);
-        Log.d("Offline", String.valueOf(download));
+        Log.d("Offline", "start download value of " + String.valueOf(download));
         if (download == null) {
-            if (startDownloadDialogHelper != null) {
-                startDownloadDialogHelper.release();
-            }
-            startDownloadDialogHelper =
-                    new StartDownloadDialogHelper(DownloadHelper.forHls(context, uri, dataSourceFactory, renderersFactory), name, id);
+            new StartDownloadDialogHelper(DownloadHelper.forHls(context, uri, dataSourceFactory, renderersFactory), name, id);
         }
     }
 
     public void removeDownload(
             String trackId) {
         Download download = downloads.get(trackId);
-        Log.d("Offline", String.valueOf(download));
+        Log.d("Offline", "remove " +  String.valueOf(download));
         if (download != null) {
             DownloadService.sendRemoveDownload(
                     context, DemoDownloadService.class, download.request.id, /* foreground= */ false);
+        }
+    }
+
+    public void removeDownloadStartsWith(
+            String prefix) {
+        for (Map.Entry<String, Download> downloadEntry : downloads.entrySet()){
+            if (downloadEntry.getKey().startsWith(prefix)) {
+                Download download = downloadEntry.getValue();
+                Log.d("Offline", "remove " +  String.valueOf(download));
+                if (download != null){
+                    DownloadService.sendRemoveDownload(
+                            context, DemoDownloadService.class, download.request.id, /* foreground= */ false);
+                }
+            }
         }
     }
 
@@ -140,6 +150,21 @@ public class DownloadTracker {
 
         for (Download download : downloadsList){
             if(download != null && download.state == Download.STATE_COMPLETED){
+                result.add(download.request.id);
+            }
+        }
+
+        return result;
+    }
+
+    public List<String> getActiveDownloads() {
+        List<Download> downloadsList = new ArrayList(downloads.values());
+        List<String> result = new ArrayList<>();
+
+        List<Integer> states = Arrays.asList(Download.STATE_DOWNLOADING, Download.STATE_QUEUED, Download.STATE_RESTARTING);
+
+        for (Download download : downloadsList){
+            if(download != null && states.contains(download.state)){
                 result.add(download.request.id);
             }
         }
@@ -189,10 +214,6 @@ public class DownloadTracker {
             downloadHelper.prepare(this);
         }
 
-        public void release() {
-            downloadHelper.release();
-        }
-
         @Override
         public void onPrepared(DownloadHelper helper) {
             startDownload(id);
@@ -215,7 +236,7 @@ public class DownloadTracker {
         }
 
         private void startDownload(DownloadRequest downloadRequest) {
-            Log.d("Offline", "start");
+            Log.d("Offline", "start request");
             DownloadService.sendAddDownload(
                     context, DemoDownloadService.class, downloadRequest, /* foreground= */ false);
         }

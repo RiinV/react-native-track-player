@@ -67,14 +67,17 @@ const App = () => {
       console.log('hi downloads');
       const downloads = await TrackPlayer.getCompletedDownloads();
       console.log('downloads', downloads);
+      const active = await TrackPlayer.getActiveDownloads();
+      console.log('active', active);
     }
 
     func();
   }, []);
 
-  const [url, setUrl] = useState('');
+  const [url1, setUrl1] = useState('');
+  const [url2, setUrl2] = useState('');
 
-  useTrackPlayerEvents([Event.DownloadCompleted], event => {
+  useTrackPlayerEvents([Event.DownloadChanged], event => {
     console.log('event', event);
   });
 
@@ -91,18 +94,41 @@ const App = () => {
         return response.json();
       })
       .then(data => {
-        setUrl(data.stream_url);
+        setUrl1(data.stream_url);
+      });
+
+    fetch(
+      'https://audio.dev.rahvaraamat.ee/audio/product-chapter/view?id=345',
+      {
+        headers: {
+          store: 'WEB3',
+        },
+      },
+    )
+      .then(response => {
+        return response.json();
+      })
+      .then(data => {
+        setUrl2(data.stream_url);
       });
   }, []);
 
   const onDownload = () => {
     console.log('react download');
-    TrackPlayer.download({
-      url,
-      id: 'f',
-      title: 'my title 2',
-      artist: 'my artist 2',
-    });
+    TrackPlayer.download([
+      {
+        url: url1,
+        id: 'a3',
+        title: 'my title 2',
+        artist: 'my artist 2',
+      },
+      {
+        url: url2,
+        id: 'a4',
+        title: 'my title 3',
+        artist: 'my artist 3',
+      },
+    ]);
   };
 
   const state = usePlaybackState();
@@ -114,8 +140,8 @@ const App = () => {
   const add = async () => {
     console.log('add track');
     TrackPlayer.add({
-      url: '',
-      id: 'xxx',
+      url: url1, // TODO: can't be empty for android
+      id: 'f',
       title: 'downloaded',
       artist: 'my artist',
       type: TrackType.HLS,
@@ -124,11 +150,15 @@ const App = () => {
 
   const onDelete = async () => {
     console.log('delete track');
-    TrackPlayer.removeDownload('xxx');
+    await TrackPlayer.removeDownload('a4');
   };
 
   const onReset = async () => {
     TrackPlayer.reset();
+  };
+
+  const removeStarts = async () => {
+    await TrackPlayer.removeDownloadStartsWith('q');
   };
 
   return (
@@ -148,6 +178,9 @@ const App = () => {
       </Pressable>
       <Pressable onPress={onReset}>
         <Text style={styles.secondaryActionButton}>reset</Text>
+      </Pressable>
+      <Pressable onPress={removeStarts}>
+        <Text style={styles.secondaryActionButton}>remove starts</Text>
       </Pressable>
     </SafeAreaView>
   );

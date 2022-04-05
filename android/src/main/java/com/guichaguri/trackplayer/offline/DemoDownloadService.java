@@ -29,6 +29,7 @@ import com.google.android.exoplayer2.ui.DownloadNotificationHelper;
 import com.google.android.exoplayer2.util.NotificationUtil;
 import com.google.android.exoplayer2.util.Util;
 import com.guichaguri.trackplayer.R;
+import com.guichaguri.trackplayer.service.MusicService;
 
 import java.util.List;
 
@@ -114,7 +115,8 @@ public class DemoDownloadService extends DownloadService {
             } else {
                 return;
             }
-            NotificationUtil.setNotification(context, nextNotificationId++, notification);
+//            don't show notification for each track separately
+//            NotificationUtil.setNotification(context, nextNotificationId++, notification);
         }
     }
 }

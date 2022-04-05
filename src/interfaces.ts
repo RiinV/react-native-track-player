@@ -168,7 +168,7 @@ export enum Event {
   RemoteLike = 'remote-like',
   RemoteDislike = 'remote-dislike',
   RemoteBookmark = 'remote-bookmark',
-  DownloadCompleted = 'download-completed',
+  DownloadChanged = 'download-changed',
 }
 
 export enum TrackType {

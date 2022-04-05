@@ -70,4 +70,8 @@ public class MusicBinder extends Binder {
         service.stopSelf();
     }
 
+    public void emit(String event, Bundle data) {
+        service.emit(event, data);
+    }
+
 }

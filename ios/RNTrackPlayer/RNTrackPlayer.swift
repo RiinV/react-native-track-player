@@ -150,7 +150,7 @@ public class RNTrackPlayer: RCTEventEmitter  {
             "remote-dislike",
             "remote-bookmark",
             
-            "download-completed"
+            "download-changed"
         ]
     }
 

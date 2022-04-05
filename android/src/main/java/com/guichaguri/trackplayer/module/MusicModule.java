@@ -34,7 +34,7 @@ import java.util.*;
 /**
  * @author Guichaguri
  */
-public class MusicModule extends ReactContextBaseJavaModule implements ServiceConnection {
+public class MusicModule extends ReactContextBaseJavaModule implements ServiceConnection, DownloadTracker.Listener {
 
     private MusicBinder binder;
     private MusicEvents eventHandler;
@@ -95,12 +95,16 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         while (!initCallbacks.isEmpty()) {
             binder.post(initCallbacks.remove());
         }
+
+        downloadTracker.addListener(this);
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
         binder = null;
         connecting = false;
+
+        downloadTracker.removeListener(this);
     }
 
     /**
@@ -173,6 +177,17 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         constants.put("REPEAT_QUEUE", Player.REPEAT_MODE_ALL);
 
         return constants;
+    }
+
+    @Override
+    public void onDownloadsChanged() {
+        Bundle bundle = new Bundle();
+        bundle.putStringArrayList("completedDownloads", (ArrayList<String>) downloadTracker.getDownloads());
+        bundle.putStringArrayList("activeDownloads", (ArrayList<String>) downloadTracker.getActiveDownloads());
+        waitForConnection(() -> binder.emit(
+               MusicEvents.DOWNLOAD_CHANGED,
+                bundle
+        ));
     }
 
     @ReactMethod
@@ -501,25 +516,45 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         Log.d("Offline", "download method");
 
         final ArrayList bundleList = Arguments.toList(tracks);
-        final Bundle bundleTrack = (Bundle) bundleList.get(0);
-        final Uri downloadUri = Uri.parse((String) bundleTrack.get("url"));
-        final String id = (String) bundleTrack.get("id");
+        for (Object o : bundleList){
+            final Bundle bundleTrack = (Bundle) o;
+            final Uri downloadUri = Uri.parse((String) bundleTrack.get("url"));
+            final String id = (String) bundleTrack.get("id");
+            Log.d("Offline", id);
+            Log.d("Offline", String.valueOf(downloadUri));
+            ReactContext context = getReactApplicationContext();
+            RenderersFactory renderersFactory = DownloadUtil.buildRenderersFactory(context);
+            downloadTracker.startDownload((String) bundleTrack.get("title"), downloadUri, id, renderersFactory);
+        }
+//        final Bundle bundleTrack = (Bundle) bundleList.get(0);
 
-        Log.d("Offline", String.valueOf(downloadUri));
-        ReactContext context = getReactApplicationContext();
-        RenderersFactory renderersFactory = DownloadUtil.buildRenderersFactory(context);
-        downloadTracker.startDownload("hello download", downloadUri, id, renderersFactory);
     }
 
     @ReactMethod
-    public void removeDownload(String trackId) {
+    public void removeDownload(String trackId, final Promise callback) {
         Log.d("Offline", "remove download method");
+//        TODO: make method async
         downloadTracker.removeDownload(trackId);
+        callback.resolve(null);
     }
+
+    @ReactMethod
+    public void removeDownloadStartsWith(String prefix, final Promise callback) {
+        Log.d("Offline", "remove download prefix method");
+        downloadTracker.removeDownloadStartsWith(prefix);
+        callback.resolve(null);
+    }
+
 
     @ReactMethod
     public void getCompletedDownloads(final Promise callback) {
         Log.d("Offline", "get downloads method");
         callback.resolve(Arguments.fromList(downloadTracker.getDownloads()));
+    }
+
+    @ReactMethod
+    public void getActiveDownloads(final Promise callback) {
+        Log.d("Offline", "get active method");
+        callback.resolve(Arguments.fromList(downloadTracker.getActiveDownloads()));
     }
 }
