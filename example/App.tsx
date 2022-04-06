@@ -118,13 +118,13 @@ const App = () => {
     TrackPlayer.download([
       {
         url: url1,
-        id: 'a3',
+        id: 'a1',
         title: 'my title 2',
         artist: 'my artist 2',
       },
       {
         url: url2,
-        id: 'a4',
+        id: 'a2',
         title: 'my title 3',
         artist: 'my artist 3',
       },
@@ -150,7 +150,7 @@ const App = () => {
 
   const onDelete = async () => {
     console.log('delete track');
-    await TrackPlayer.removeDownload('a4');
+    await TrackPlayer.removeDownload('d');
   };
 
   const onReset = async () => {
@@ -158,7 +158,7 @@ const App = () => {
   };
 
   const removeStarts = async () => {
-    await TrackPlayer.removeDownloadStartsWith('q');
+    await TrackPlayer.removeDownloadStartsWith('a');
   };
 
   return (

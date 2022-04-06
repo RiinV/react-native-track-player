@@ -33,6 +33,14 @@ struct VideoData: Codable {
     }
 }
 
+func isStateActive(_ state: DownloadState) -> Bool {
+    switch state {
+    case .failed, .canceled, .completed, .unknown, .paused:
+        return false
+    case .running, .noConnection, .keyLoaded, .prefetching, .waiting:
+        return true
+    }
+}
 
 @objc(RNTrackPlayer)
 public class RNTrackPlayer: RCTEventEmitter  {
@@ -744,59 +752,61 @@ public class RNTrackPlayer: RCTEventEmitter  {
 
     @objc(removeDownload:resolver:rejecter:)
     public func removeDownload(trackId: NSString, resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
-//        AssetPersistenceManager.sharedManager.deleteAsset(trackId as String, reject: reject)
+        guard let data = items[trackId as String] else { return }
+        if let location = data.location { try? fileManager.removeItem(at: location) }
+        items.removeValue(forKey: trackId as String)
+        save(items: items)
+        sendEvent(withName: "download-changed",
+                  body: ["completedDownloads": getCompletedDownloads(), "activeDownloads": getActiveDownloads()])
+        resolve(NSNull())
+    }
+    
+    @objc(removeDownloadStartsWith:resolver:rejecter:)
+    public func removeDownloadStartsWith(prefix: NSString, resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
+        
+        for(key, data) in items {
+            if (key.hasPrefix(prefix as String)) {
+                if let location = data.location { try? fileManager.removeItem(at: location) }
+                items.removeValue(forKey: key)
+            }
+        }
+        save(items: items)
+        sendEvent(withName: "download-changed",
+                  body: ["completedDownloads": getCompletedDownloads(), "activeDownloads": getActiveDownloads()])
         resolve(NSNull())
     }
 
-    @objc(getCompletedDownloads:rejecter:)
-    public func getCompletedDownloads(resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
-        let filtered = items.filter({ $1.state == DownloadState.completed })
-        let keys = NSArray(array: Array(filtered.keys))
-        resolve(keys)
+    private func getCompletedDownloads() -> NSArray {
+        let filteredDownloaded = items.filter({ $1.state == DownloadState.completed })
+        let downloaded = NSArray(array: Array(filteredDownloaded.keys))
+        return downloaded
+    }
+    
+    private func getActiveDownloads() -> NSArray {
+        let filteredInProgress = items.filter({ isStateActive($1.state) })
+        let inProgress = NSArray(array: Array(filteredInProgress.keys))
+        return inProgress
     }
     
     @objc(getCompletedDownloads:rejecter:)
     public func getCompletedDownloads(resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
-        let filtered = items.filter({ $1.state == DownloadState.completed })
-        let keys = NSArray(array: Array(filtered.keys))
-        resolve(keys)
+        resolve(getCompletedDownloads())
+
     }
     
     @objc(getActiveDownloads:rejecter:)
     public func getActiveDownloads(resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
-        //        TODO: add proper filtering for active downloads
-        let filtered = items.filter({ $1.state != DownloadState.completed })
-        let keys = NSArray(array: Array(filtered.keys))
-        resolve(keys)
+        resolve(getActiveDownloads())
     }
-    
     
     private func update(item: ItemInformation) {
         items[item.identifier] = VideoData(identifier: item.identifier,
                                            title: item.title ?? "default title", state: item.state,
                                            stringURL:  item.mediaLink, location: item.location)
         print(item.state)
-        
-        let filteredDownloaded = items.filter({ $1.state == DownloadState.completed })
-        let downloaded = NSArray(array: Array(filteredDownloaded.keys))
-        
-//        TODO: add proper filtering for active downloads
-        let filteredInProgress = items.filter({ $1.state != DownloadState.completed })
-        let inProgress = NSArray(array: Array(filteredInProgress.keys))
-        
+        sendEvent(withName: "download-changed",
+                  body: ["trackId": item.identifier, "completedDownloads": getCompletedDownloads(), "activeDownloads": getActiveDownloads()])
 
-        sendEvent(withName: "download-completed", body: ["trackId": item.identifier, "completedDownloads": downloaded, "activeDownloads": inProgress])
-
-        save(items: items)
-    }
-
-    private func removeVideo(identifier: String, location: URL?, state: DownloadState) {
-        guard let data = items[identifier] else { return }
-        if let location = location ?? data.location { try? fileManager.removeItem(at: location) }
-        let videoData = VideoData(identifier: data.identifier, title: data.title,
-                                  imageName: data.imageName, state: state,
-                                  stringURL: data.stringURL)
-        items[identifier] = videoData
         save(items: items)
     }
 
@@ -817,6 +827,7 @@ public class RNTrackPlayer: RCTEventEmitter  {
               let items = try? JSONDecoder().decode([String: VideoData].self, from: data) else {
                 return [:]
         }
-        return items
+        let filteredDownloaded = items.filter({ $1.state == DownloadState.completed })
+        return filteredDownloaded
     }
 }
