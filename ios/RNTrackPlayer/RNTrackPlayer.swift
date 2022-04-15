@@ -35,6 +35,12 @@ struct VideoData: Codable {
         guard let path = path else { return nil }
         return URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(path)
     }
+
+    public var exists: Bool {
+        let fileManager = FileManager()
+        guard let location = self.location else { return false }
+        return fileManager.fileExists(atPath: location.path)
+    }
 }
 
 func isStateActive(_ state: DownloadState) -> Bool {
@@ -839,9 +845,7 @@ public class RNTrackPlayer: RCTEventEmitter  {
               let items = try? JSONDecoder().decode([String: VideoData].self, from: data) else {
                 return [:]
         }
-        let fileManager = FileManager()
-        let filteredDownloaded = items.filter({ $1.state == DownloadState.completed })
-        let existing = items.filter({ fileManager.fileExists(atPath: $1.location.path) })
-        return existing
+        let filteredDownloaded = items.filter({ $1.state == DownloadState.completed && $1.exists})
+        return filteredDownloaded
     }
 }
