@@ -11,7 +11,6 @@ import MediaPlayer
 import SwiftAudioEx
 import AVFoundation
 import VidLoader
-//import VidLoader
 
 
 struct VideoData: Codable {
@@ -20,16 +19,21 @@ struct VideoData: Codable {
     let imageName: String
     let state: DownloadState
     let stringURL: String
-    let location: URL?
+    let path: String?
 
     init(identifier: String, title: String, imageName: String = "default_thumbnail",
-         state: DownloadState = .unknown, stringURL: String, location: URL? = nil) {
+         state: DownloadState = .unknown, stringURL: String, path: String? = nil) {
         self.identifier = identifier
         self.title = title
         self.imageName = imageName
         self.state = state
         self.stringURL = stringURL
-        self.location = location
+        self.path = path
+    }
+    
+    public var location: URL? {
+        guard let path = path else { return nil }
+        return URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(path)
     }
 }
 
@@ -804,7 +808,7 @@ public class RNTrackPlayer: RCTEventEmitter  {
     private func update(item: ItemInformation) {
         items[item.identifier] = VideoData(identifier: item.identifier,
                                            title: item.title ?? "default title", state: item.state,
-                                           stringURL:  item.mediaLink, location: item.location)
+                                           stringURL:  item.mediaLink, path: item.path)
 
         // print(item.state)
         if item.state == DownloadState.running(0) ||
@@ -835,7 +839,9 @@ public class RNTrackPlayer: RCTEventEmitter  {
               let items = try? JSONDecoder().decode([String: VideoData].self, from: data) else {
                 return [:]
         }
+        let fileManager = FileManager()
         let filteredDownloaded = items.filter({ $1.state == DownloadState.completed })
-        return filteredDownloaded
+        let existing = items.filter({ fileManager.fileExists(atPath: $1.location.path) })
+        return existing
     }
 }
