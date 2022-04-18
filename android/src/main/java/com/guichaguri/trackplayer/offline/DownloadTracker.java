@@ -15,7 +15,6 @@ package com.guichaguri.trackplayer.offline;
  * limitations under the License.
  */
 
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.net.Uri;
@@ -64,7 +63,7 @@ public class DownloadTracker {
         /**
          * Called when the tracked downloads changed.
          */
-        void onDownloadsChanged();
+        void onDownloadsChanged(String trackId, String status);
     }
 
     private static final String TAG = "DownloadTracker";
@@ -75,7 +74,6 @@ public class DownloadTracker {
     private final HashMap<String, Download> downloads;
     private final DownloadIndex downloadIndex;
     private final DefaultTrackSelector.Parameters trackSelectorParameters;
-
 
     public DownloadTracker(
             Context context, DataSource.Factory dataSourceFactory, DownloadManager downloadManager) {
@@ -116,14 +114,15 @@ public class DownloadTracker {
         Download download = downloads.get(id);
         Log.d("Offline", "start download value of " + String.valueOf(download));
         if (download == null) {
-            new StartDownloadDialogHelper(DownloadHelper.forHls(context, uri, dataSourceFactory, renderersFactory), name, id);
+            new StartDownloadDialogHelper(DownloadHelper.forHls(context, uri, dataSourceFactory, renderersFactory),
+                    name, id);
         }
     }
 
     public void removeDownload(
             String trackId) {
         Download download = downloads.get(trackId);
-        Log.d("Offline", "remove " +  String.valueOf(download));
+        Log.d("Offline", "remove " + String.valueOf(download));
         if (download != null) {
             DownloadService.sendRemoveDownload(
                     context, DemoDownloadService.class, download.request.id, /* foreground= */ false);
@@ -132,11 +131,11 @@ public class DownloadTracker {
 
     public void removeDownloadStartsWith(
             String prefix) {
-        for (Map.Entry<String, Download> downloadEntry : downloads.entrySet()){
+        for (Map.Entry<String, Download> downloadEntry : downloads.entrySet()) {
             if (downloadEntry.getKey().startsWith(prefix)) {
                 Download download = downloadEntry.getValue();
-                Log.d("Offline", "remove " +  String.valueOf(download));
-                if (download != null){
+                Log.d("Offline", "remove " + String.valueOf(download));
+                if (download != null) {
                     DownloadService.sendRemoveDownload(
                             context, DemoDownloadService.class, download.request.id, /* foreground= */ false);
                 }
@@ -148,8 +147,8 @@ public class DownloadTracker {
         List<Download> downloadsList = new ArrayList(downloads.values());
         List<String> result = new ArrayList<>();
 
-        for (Download download : downloadsList){
-            if(download != null && download.state == Download.STATE_COMPLETED){
+        for (Download download : downloadsList) {
+            if (download != null && download.state == Download.STATE_COMPLETED) {
                 result.add(download.request.id);
             }
         }
@@ -161,10 +160,11 @@ public class DownloadTracker {
         List<Download> downloadsList = new ArrayList(downloads.values());
         List<String> result = new ArrayList<>();
 
-        List<Integer> states = Arrays.asList(Download.STATE_DOWNLOADING, Download.STATE_QUEUED, Download.STATE_RESTARTING);
+        List<Integer> states = Arrays.asList(Download.STATE_DOWNLOADING, Download.STATE_QUEUED,
+                Download.STATE_RESTARTING);
 
-        for (Download download : downloadsList){
-            if(download != null && states.contains(download.state)){
+        for (Download download : downloadsList) {
+            if (download != null && states.contains(download.state)) {
                 result.add(download.request.id);
             }
         }
@@ -189,7 +189,8 @@ public class DownloadTracker {
         public void onDownloadChanged(DownloadManager downloadManager, Download download) {
             downloads.put(download.request.id, download);
             for (Listener listener : listeners) {
-                listener.onDownloadsChanged();
+                String status = download.state == Download.STATE_COMPLETED ? "completed" : "unknown";
+                listener.onDownloadsChanged(download.request.id, status);
             }
         }
 
@@ -197,7 +198,7 @@ public class DownloadTracker {
         public void onDownloadRemoved(DownloadManager downloadManager, Download download) {
             downloads.remove(download.request.id);
             for (Listener listener : listeners) {
-                listener.onDownloadsChanged();
+                listener.onDownloadsChanged(download.request.id, "removed");
             }
         }
     }
@@ -246,4 +247,3 @@ public class DownloadTracker {
         }
     }
 }
-

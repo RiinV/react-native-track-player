@@ -180,8 +180,10 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
     }
 
     @Override
-    public void onDownloadsChanged() {
+    public void onDownloadsChanged(String trackId, String status) {
         Bundle bundle = new Bundle();
+        bundle.putString("trackId", trackId);
+        bundle.putString("state", status);
         bundle.putStringArrayList("completedDownloads", (ArrayList<String>) downloadTracker.getDownloads());
         bundle.putStringArrayList("activeDownloads", (ArrayList<String>) downloadTracker.getActiveDownloads());
         waitForConnection(() -> binder.emit(
