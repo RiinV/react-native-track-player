@@ -821,8 +821,9 @@ public class RNTrackPlayer: RCTEventEmitter  {
             item.state == DownloadState.running(1) ||
             item.state == DownloadState.completed ||
             item.state == DownloadState.keyLoaded {
+            let state = item.state == DownloadState.completed ? "completed" : "unknown";
             sendEvent(withName: "download-changed",
-                      body: ["trackId": item.identifier, "completedDownloads": getCompletedDownloads(), "activeDownloads": getActiveDownloads()])
+                      body: ["trackId": item.identifier, "state": state, "completedDownloads": getCompletedDownloads(), "activeDownloads": getActiveDownloads()])
         }
 
         save(items: items)
