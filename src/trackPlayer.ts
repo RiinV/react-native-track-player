@@ -343,7 +343,7 @@ async function getActiveDownloads(): Promise<string[]> {
   return TrackPlayer.getActiveDownloads()
 }
 
-async function setShouldDownloadOnWifiOnly(shouldDownloadOnWifiOnly: boolean): Promise<string[]> {
+async function setShouldDownloadOnWifiOnly(shouldDownloadOnWifiOnly: boolean): Promise<void> {
   return TrackPlayer.setDownloadOnWifiOnly(shouldDownloadOnWifiOnly)
 }
 
