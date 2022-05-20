@@ -45,6 +45,7 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
     public MusicModule(ReactApplicationContext reactContext) {
         super(reactContext);
     }
+
     private DownloadTracker downloadTracker;
 
     @Override
@@ -187,9 +188,8 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         bundle.putStringArrayList("completedDownloads", (ArrayList<String>) downloadTracker.getDownloads());
         bundle.putStringArrayList("activeDownloads", (ArrayList<String>) downloadTracker.getActiveDownloads());
         waitForConnection(() -> binder.emit(
-               MusicEvents.DOWNLOAD_CHANGED,
-                bundle
-        ));
+                MusicEvents.DOWNLOAD_CHANGED,
+                bundle));
     }
 
     @ReactMethod
@@ -517,13 +517,12 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         }
     }
 
-
     @ReactMethod
     public void download(ReadableArray tracks) {
         Log.d("Offline", "download method");
 
         final ArrayList bundleList = Arguments.toList(tracks);
-        for (Object o : bundleList){
+        for (Object o : bundleList) {
             final Bundle bundleTrack = (Bundle) o;
             final Uri downloadUri = Uri.parse((String) bundleTrack.get("url"));
             final String id = (String) bundleTrack.get("id");
@@ -533,14 +532,14 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
             RenderersFactory renderersFactory = DownloadUtil.buildRenderersFactory(context);
             downloadTracker.startDownload((String) bundleTrack.get("title"), downloadUri, id, renderersFactory);
         }
-//        final Bundle bundleTrack = (Bundle) bundleList.get(0);
+        // final Bundle bundleTrack = (Bundle) bundleList.get(0);
 
     }
 
     @ReactMethod
     public void removeDownload(String trackId, final Promise callback) {
         Log.d("Offline", "remove download method");
-//        TODO: make method async
+        // TODO: make method async
         downloadTracker.removeDownload(trackId);
         callback.resolve(null);
     }
@@ -552,7 +551,6 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         callback.resolve(null);
     }
 
-
     @ReactMethod
     public void getCompletedDownloads(final Promise callback) {
         Log.d("Offline", "get downloads method");
@@ -563,5 +561,11 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
     public void getActiveDownloads(final Promise callback) {
         Log.d("Offline", "get active method");
         callback.resolve(Arguments.fromList(downloadTracker.getActiveDownloads()));
+    }
+
+    @ReactMethod
+    public void setDownloadOnWifiOnly(final boolean shouldDownloadOnWifiOnly, final Promise callback) {
+        downloadTracker.setDownloadOnWifiOnly(shouldDownloadOnWifiOnly);
+        callback.resolve(null);
     }
 }

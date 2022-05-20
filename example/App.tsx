@@ -76,6 +76,15 @@ const App = () => {
 
   const [url1, setUrl1] = useState('');
   const [url2, setUrl2] = useState('');
+  const [shouldDownloadOnWifiOnly, setShouldDownloadOnWifiOnly] = useState(
+    false,
+  );
+  // const [url2, setUrl2] = useState('');
+
+  // useEffect(() => {
+  //   console.log('set download on wifi only');
+  //   TrackPlayer.setShouldDownloadOnWifiOnly(true);
+  // }, []);
 
   useTrackPlayerEvents([Event.DownloadChanged], event => {
     console.log('event', event);
@@ -87,6 +96,8 @@ const App = () => {
       {
         headers: {
           store: 'WEB3',
+          Authorization:
+            'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOjIwNjkwMiwiY2xpZW50IjoxNjg3MTIsInN0b3JlIjo2LCJhdWQiOm51bGwsImlhdCI6MTY1MzA1MTQyOSwibmJmIjoxNjUzMDUxNDI5fQ.I7qpdjFe4E97o2coXm2tpQncQ2726trLZz1EnQd9rA-_TNY3qZ0Lm4wrpPlewDwipN_DLuTU-B6CmRobxlwgDg',
         },
       },
     )
@@ -102,6 +113,8 @@ const App = () => {
       {
         headers: {
           store: 'WEB3',
+          Authorization:
+            'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOjIwNjkwMiwiY2xpZW50IjoxNjg3MTIsInN0b3JlIjo2LCJhdWQiOm51bGwsImlhdCI6MTY1MzA1MTQyOSwibmJmIjoxNjUzMDUxNDI5fQ.I7qpdjFe4E97o2coXm2tpQncQ2726trLZz1EnQd9rA-_TNY3qZ0Lm4wrpPlewDwipN_DLuTU-B6CmRobxlwgDg',
         },
       },
     )
@@ -115,6 +128,7 @@ const App = () => {
 
   const onDownload = () => {
     console.log('react download');
+    console.log(url1, url2);
     TrackPlayer.download([
       {
         url: url1,
@@ -140,8 +154,8 @@ const App = () => {
   const add = async () => {
     console.log('add track');
     TrackPlayer.add({
-      url: url1, // TODO: can't be empty for android
-      id: 'f',
+      url: 'google.com', // TODO: can't be empty for android
+      id: 'a1',
       title: 'downloaded',
       artist: 'my artist',
       type: TrackType.HLS,
@@ -159,6 +173,11 @@ const App = () => {
 
   const removeStarts = async () => {
     await TrackPlayer.removeDownloadStartsWith('a');
+  };
+
+  const toggleWifiSetting = () => {
+    TrackPlayer.setShouldDownloadOnWifiOnly(!shouldDownloadOnWifiOnly);
+    setShouldDownloadOnWifiOnly(!shouldDownloadOnWifiOnly);
   };
 
   return (
@@ -181,6 +200,13 @@ const App = () => {
       </Pressable>
       <Pressable onPress={removeStarts}>
         <Text style={styles.secondaryActionButton}>remove starts</Text>
+      </Pressable>
+
+      <Pressable onPress={toggleWifiSetting}>
+        <Text style={styles.secondaryActionButton}>
+          Should download on WIFI only:
+          {shouldDownloadOnWifiOnly ? 'Yes' : 'No'}
+        </Text>
       </Pressable>
     </SafeAreaView>
   );
