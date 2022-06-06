@@ -76,6 +76,15 @@ const App = () => {
 
   const [url1, setUrl1] = useState('');
   const [url2, setUrl2] = useState('');
+  const [shouldDownloadOnWifiOnly, setShouldDownloadOnWifiOnly] = useState(
+    false,
+  );
+  // const [url2, setUrl2] = useState('');
+
+  // useEffect(() => {
+  //   console.log('set download on wifi only');
+  //   TrackPlayer.setShouldDownloadOnWifiOnly(true);
+  // }, []);
 
   useTrackPlayerEvents([Event.DownloadChanged], event => {
     console.log('event', event);
@@ -117,6 +126,7 @@ const App = () => {
       Authorization:
         'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOjIwNjkwMiwiY2xpZW50IjoxNjg3MTIsInN0b3JlIjo2LCJhdWQiOm51bGwsImlhdCI6MTY1MzMxNDIwNSwibmJmIjoxNjUzMzE0MjA1fQ.rjyE1jL-sm6D8gJhT1Htk9q-Jgenrw2vTKZjh9PWEDs8qhLBlX1hZvt865ZfydPtpH1n60DesCZaxF0C_3WRLg',
     };
+    console.log(url1, url2);
     TrackPlayer.download([
       {
         url: url1,
@@ -165,6 +175,11 @@ const App = () => {
     await TrackPlayer.removeDownloadStartsWith('a');
   };
 
+  const toggleWifiSetting = () => {
+    TrackPlayer.setShouldDownloadOnWifiOnly(!shouldDownloadOnWifiOnly);
+    setShouldDownloadOnWifiOnly(!shouldDownloadOnWifiOnly);
+  };
+
   return (
     <SafeAreaView style={styles.screenContainer}>
       <StatusBar barStyle={'light-content'} />
@@ -185,6 +200,13 @@ const App = () => {
       </Pressable>
       <Pressable onPress={removeStarts}>
         <Text style={styles.secondaryActionButton}>remove starts</Text>
+      </Pressable>
+
+      <Pressable onPress={toggleWifiSetting}>
+        <Text style={styles.secondaryActionButton}>
+          Should download on WIFI only:
+          {shouldDownloadOnWifiOnly ? 'Yes' : 'No'}
+        </Text>
       </Pressable>
     </SafeAreaView>
   );

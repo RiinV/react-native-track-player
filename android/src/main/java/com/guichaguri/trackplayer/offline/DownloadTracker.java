@@ -39,6 +39,7 @@ import com.google.android.exoplayer2.util.Log;
 import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.upstream.ResolvingDataSource;
 import com.guichaguri.trackplayer.R;
+import com.google.android.exoplayer2.scheduler.Requirements;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -122,6 +123,16 @@ public class DownloadTracker {
                     DownloadHelper.forHls(context, uri, dataSourceFactoryWithHeaders, renderersFactory),
                     name, id);
         }
+    }
+
+    public void setDownloadOnWifiOnly(
+            Boolean shouldDownloadOnWifiOnly) {
+        Requirements requirements = new Requirements(Requirements.NETWORK);
+        if (shouldDownloadOnWifiOnly) {
+            requirements = new Requirements(Requirements.NETWORK_UNMETERED);
+        }
+        DownloadService.sendSetRequirements(
+                context, DemoDownloadService.class, requirements, /* foreground= */ false);
     }
 
     public void removeDownload(

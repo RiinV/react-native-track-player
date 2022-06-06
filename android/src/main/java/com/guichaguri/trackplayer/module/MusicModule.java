@@ -571,4 +571,10 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         Log.d("Offline", "get active method");
         callback.resolve(Arguments.fromList(downloadTracker.getActiveDownloads()));
     }
+
+    @ReactMethod
+    public void setDownloadOnWifiOnly(final boolean shouldDownloadOnWifiOnly, final Promise callback) {
+        downloadTracker.setDownloadOnWifiOnly(shouldDownloadOnWifiOnly);
+        callback.resolve(null);
+    }
 }
