@@ -37,6 +37,7 @@ import com.google.android.exoplayer2.trackselection.MappingTrackSelector.MappedT
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.util.Log;
 import com.google.android.exoplayer2.util.Util;
+import com.google.android.exoplayer2.upstream.ResolvingDataSource;
 import com.guichaguri.trackplayer.R;
 
 import java.io.IOException;
@@ -109,12 +110,16 @@ public class DownloadTracker {
             String name,
             Uri uri,
             String id,
-            RenderersFactory renderersFactory) {
+            RenderersFactory renderersFactory, Map<String, String> httpHeaders) {
 
         Download download = downloads.get(id);
         Log.d("Offline", "start download value of " + String.valueOf(download));
+        DataSource.Factory dataSourceFactoryWithHeaders = new ResolvingDataSource.Factory(
+                dataSourceFactory,
+                dataSpec -> dataSpec.withRequestHeaders(httpHeaders));
         if (download == null) {
-            new StartDownloadDialogHelper(DownloadHelper.forHls(context, uri, dataSourceFactory, renderersFactory),
+            new StartDownloadDialogHelper(
+                    DownloadHelper.forHls(context, uri, dataSourceFactoryWithHeaders, renderersFactory),
                     name, id);
         }
     }

@@ -82,14 +82,13 @@ const App = () => {
   });
 
   useEffect(() => {
-    fetch(
-      'https://audio.dev.rahvaraamat.ee/audio/product-chapter/view?id=342',
-      {
-        headers: {
-          store: 'WEB3',
-        },
+    fetch('https://dev.rahvaraamat.ee/audio/product-chapter/view?id=591', {
+      headers: {
+        store: 'WEB3',
+        Authorization:
+          'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOjIwNjkwMiwiY2xpZW50IjoxNjg3MTIsInN0b3JlIjo2LCJhdWQiOm51bGwsImlhdCI6MTY1MzMxNDIwNSwibmJmIjoxNjUzMzE0MjA1fQ.rjyE1jL-sm6D8gJhT1Htk9q-Jgenrw2vTKZjh9PWEDs8qhLBlX1hZvt865ZfydPtpH1n60DesCZaxF0C_3WRLg',
       },
-    )
+    })
       .then(response => {
         return response.json();
       })
@@ -97,14 +96,13 @@ const App = () => {
         setUrl1(data.stream_url);
       });
 
-    fetch(
-      'https://audio.dev.rahvaraamat.ee/audio/product-chapter/view?id=345',
-      {
-        headers: {
-          store: 'WEB3',
-        },
+    fetch('https://dev.rahvaraamat.ee/audio/product-chapter/view?id=592', {
+      headers: {
+        store: 'WEB3',
+        Authorization:
+          'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOjIwNjkwMiwiY2xpZW50IjoxNjg3MTIsInN0b3JlIjo2LCJhdWQiOm51bGwsImlhdCI6MTY1MzMxNDIwNSwibmJmIjoxNjUzMzE0MjA1fQ.rjyE1jL-sm6D8gJhT1Htk9q-Jgenrw2vTKZjh9PWEDs8qhLBlX1hZvt865ZfydPtpH1n60DesCZaxF0C_3WRLg',
       },
-    )
+    })
       .then(response => {
         return response.json();
       })
@@ -115,18 +113,24 @@ const App = () => {
 
   const onDownload = () => {
     console.log('react download');
+    const headers = {
+      Authorization:
+        'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOjIwNjkwMiwiY2xpZW50IjoxNjg3MTIsInN0b3JlIjo2LCJhdWQiOm51bGwsImlhdCI6MTY1MzMxNDIwNSwibmJmIjoxNjUzMzE0MjA1fQ.rjyE1jL-sm6D8gJhT1Htk9q-Jgenrw2vTKZjh9PWEDs8qhLBlX1hZvt865ZfydPtpH1n60DesCZaxF0C_3WRLg',
+    };
     TrackPlayer.download([
       {
         url: url1,
         id: 'a1',
         title: 'my title 2',
         artist: 'my artist 2',
+        headers,
       },
       {
         url: url2,
         id: 'a2',
         title: 'my title 3',
         artist: 'my artist 3',
+        headers,
       },
     ]);
   };
@@ -140,8 +144,8 @@ const App = () => {
   const add = async () => {
     console.log('add track');
     TrackPlayer.add({
-      url: url1, // TODO: can't be empty for android
-      id: 'f',
+      url: 'google.com', // TODO: can't be empty for android
+      id: 'a1',
       title: 'downloaded',
       artist: 'my artist',
       type: TrackType.HLS,

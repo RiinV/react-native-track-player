@@ -45,6 +45,7 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
     public MusicModule(ReactApplicationContext reactContext) {
         super(reactContext);
     }
+
     private DownloadTracker downloadTracker;
 
     @Override
@@ -187,9 +188,8 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         bundle.putStringArrayList("completedDownloads", (ArrayList<String>) downloadTracker.getDownloads());
         bundle.putStringArrayList("activeDownloads", (ArrayList<String>) downloadTracker.getActiveDownloads());
         waitForConnection(() -> binder.emit(
-               MusicEvents.DOWNLOAD_CHANGED,
-                bundle
-        ));
+                MusicEvents.DOWNLOAD_CHANGED,
+                bundle));
     }
 
     @ReactMethod
@@ -517,30 +517,38 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         }
     }
 
-
     @ReactMethod
     public void download(ReadableArray tracks) {
         Log.d("Offline", "download method");
 
         final ArrayList bundleList = Arguments.toList(tracks);
-        for (Object o : bundleList){
+        for (Object o : bundleList) {
             final Bundle bundleTrack = (Bundle) o;
             final Uri downloadUri = Uri.parse((String) bundleTrack.get("url"));
             final String id = (String) bundleTrack.get("id");
+            Bundle httpHeaders = bundleTrack.getBundle("headers");
+            Map<String, String> headers = new HashMap<>();
+            if (httpHeaders != null) {
+                for (String header : httpHeaders.keySet()) {
+                    headers.put(header, httpHeaders.getString(header));
+                }
+            }
+
             Log.d("Offline", id);
             Log.d("Offline", String.valueOf(downloadUri));
             ReactContext context = getReactApplicationContext();
             RenderersFactory renderersFactory = DownloadUtil.buildRenderersFactory(context);
-            downloadTracker.startDownload((String) bundleTrack.get("title"), downloadUri, id, renderersFactory);
+            downloadTracker.startDownload((String) bundleTrack.get("title"), downloadUri, id, renderersFactory,
+                    headers);
         }
-//        final Bundle bundleTrack = (Bundle) bundleList.get(0);
+        // final Bundle bundleTrack = (Bundle) bundleList.get(0);
 
     }
 
     @ReactMethod
     public void removeDownload(String trackId, final Promise callback) {
         Log.d("Offline", "remove download method");
-//        TODO: make method async
+        // TODO: make method async
         downloadTracker.removeDownload(trackId);
         callback.resolve(null);
     }
@@ -551,7 +559,6 @@ public class MusicModule extends ReactContextBaseJavaModule implements ServiceCo
         downloadTracker.removeDownloadStartsWith(prefix);
         callback.resolve(null);
     }
-
 
     @ReactMethod
     public void getCompletedDownloads(final Promise callback) {
