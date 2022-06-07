@@ -176,8 +176,7 @@ public class DownloadTracker {
         List<Download> downloadsList = new ArrayList(downloads.values());
         List<String> result = new ArrayList<>();
 
-        List<Integer> states = Arrays.asList(Download.STATE_DOWNLOADING, Download.STATE_QUEUED,
-                Download.STATE_RESTARTING);
+        List<Integer> states = Arrays.asList(Download.STATE_DOWNLOADING, Download.STATE_RESTARTING);
 
         for (Download download : downloadsList) {
             if (download != null && states.contains(download.state)) {
