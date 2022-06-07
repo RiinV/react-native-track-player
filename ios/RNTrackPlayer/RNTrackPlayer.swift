@@ -849,4 +849,15 @@ public class RNTrackPlayer: RCTEventEmitter  {
         let filteredDownloaded = items.filter({ $1.state == DownloadState.completed && $1.exists})
         return filteredDownloaded
     }
+    
+    @objc(setDownloadOnWifiOnly:resolver:rejecter:)
+    public func setDownloadOnWifiOnly(shouldDownloadOnWifiOnly: NSNumber, resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) {
+        if(shouldDownloadOnWifiOnly.boolValue){
+            vidLoader.disableMobileDataAccess()
+        }else{
+            vidLoader.enableMobileDataAccess()
+        }
+        resolve(NSNull())
+    }
+    
 }

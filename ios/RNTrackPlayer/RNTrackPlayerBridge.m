@@ -137,4 +137,7 @@ RCT_EXTERN_METHOD(getCompletedDownloads:(RCTPromiseResolveBlock)resolve
 RCT_EXTERN_METHOD(getActiveDownloads:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject);
 
+RCT_EXTERN_METHOD(setDownloadOnWifiOnly:(nonnull NSNumber *)shouldDownloadOnWifiOnly
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject);
 @end
