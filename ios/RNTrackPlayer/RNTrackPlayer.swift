@@ -45,9 +45,9 @@ struct VideoData: Codable {
 
 func isStateActive(_ state: DownloadState) -> Bool {
     switch state {
-    case .failed, .canceled, .completed, .unknown, .paused:
+    case .failed, .canceled, .completed, .unknown, .paused, .noConnection, .keyLoaded:
         return false
-    case .running, .noConnection, .keyLoaded, .prefetching, .waiting:
+    case .running, .prefetching, .waiting:
         return true
     }
 }
@@ -811,22 +811,31 @@ public class RNTrackPlayer: RCTEventEmitter  {
         resolve(getActiveDownloads())
     }
     
+    public func isPaused(item: ItemInformation) -> NSNumber {
+        switch item.state {
+        case .paused:
+            return true
+        default:
+            return false
+        }
+    }
+    
     private func update(item: ItemInformation) {
         items[item.identifier] = VideoData(identifier: item.identifier,
                                            title: item.title ?? "default title", state: item.state,
                                            stringURL:  item.mediaLink, path: item.path)
 
-        // print(item.state)
+        save(items: items)
         if item.state == DownloadState.running(0) ||
             item.state == DownloadState.running(1) ||
             item.state == DownloadState.completed ||
-            item.state == DownloadState.keyLoaded {
+            item.state == DownloadState.waiting ||
+            item.state == DownloadState.keyLoaded ||
+            isPaused(item: item).boolValue {
             let state = item.state == DownloadState.completed ? "completed" : "unknown";
             sendEvent(withName: "download-changed",
                       body: ["trackId": item.identifier, "state": state, "completedDownloads": getCompletedDownloads(), "activeDownloads": getActiveDownloads()])
         }
-
-        save(items: items)
     }
 
     private func setupObservers() {
