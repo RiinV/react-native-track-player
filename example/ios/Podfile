@@ -20,8 +20,8 @@ target 'example' do
     # Pods for testing
   end
   
-  pod 'SwiftAudioEx', :git => 'https://github.com/katerynapeikova/SwiftAudioEx', :branch => 'offline'
-  pod 'VidLoader', :git => 'https://github.com/katerynapeikova/VidLoader.git'
+  pod 'SwiftAudioEx', :git => 'https://github.com/RiinV/SwiftAudioEx', :branch => 'offline'
+  pod 'VidLoader', :git => 'https://github.com/RiinV/VidLoader.git'
 
   # Enables Flipper.
   #

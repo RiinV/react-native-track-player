@@ -3,7 +3,7 @@
     "pins": [
       {
         "package": "SwiftAudioEx",
-        "repositoryURL": "https://github.com/katerynapeikova/SwiftAudioEx",
+        "repositoryURL": "https://github.com/RiinV/SwiftAudioEx",
         "state": {
           "branch": "offline",
           "revision": "7fd488f8adae2976e7336d0622ede05fe85a2747",
